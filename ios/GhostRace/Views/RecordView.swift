@@ -21,68 +21,68 @@ struct RecordView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                if startedAt == nil {
-                    Picker("Activity", selection: $activityType) {
-                        Text("🏃 Run").tag(ActivityType.run)
-                        Text("🚴 Ride").tag(ActivityType.ride)
+            ZStack {
+                Color.grAsphalt.ignoresSafeArea()
+                VStack(spacing: 32) {
+                    if startedAt == nil {
+                        Picker("Activity", selection: $activityType) {
+                            Text("🏃 Run").tag(ActivityType.run)
+                            Text("🚴 Ride").tag(ActivityType.ride)
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                }
 
-                Spacer()
-                VStack(spacing: 8) {
-                    Text(RaceCueScheduler.formatDuration(elapsed))
-                        .font(.system(size: 72, weight: .bold, design: .rounded).monospacedDigit())
-                    Text("\(Int(distanceM)) m")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                    if let fix = recorder.latestFix {
-                        Label("GPS ±\(Int(fix.horizontalAccuracyM))m", systemImage: "location.fill")
-                            .font(.caption)
-                            .foregroundStyle(fix.horizontalAccuracyM <= 10 ? .green : .orange)
+                    Spacer()
+                    VStack(spacing: 10) {
+                        Text(RaceCueScheduler.formatDuration(elapsed))
+                            .font(GRFont.instrument(64, weight: .heavy))
+                            .foregroundStyle(Color.grChalk)
+                        Text("\(Int(distanceM)) m")
+                            .font(GRFont.instrument(20, weight: .medium))
+                            .foregroundStyle(Color.grMuted)
+                        gpsChip
+                            .padding(.top, 4)
+                    }
+                    Spacer()
+
+                    if startedAt == nil {
+                        Button {
+                            recorder.activityType = activityType
+                            recorder.requestPermission()
+                            recorder.start()
+                            startedAt = Date()
+                        } label: {
+                            Text("Start")
+                        }
+                        .buttonStyle(BlazeButtonStyle())
+                        .padding(.horizontal)
                     } else {
-                        Label("Acquiring GPS…", systemImage: "location.slash")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Button {
+                            recorder.stop()
+                            showingSave = true
+                        } label: {
+                            Text("Finish")
+                        }
+                        .buttonStyle(StopButtonStyle())
+                        .padding(.horizontal)
                     }
                 }
-                Spacer()
-
-                if startedAt == nil {
-                    Button {
-                        recorder.activityType = activityType
-                        recorder.requestPermission()
-                        recorder.start()
-                        startedAt = Date()
-                    } label: {
-                        Text("Start")
-                            .font(.title2.bold())
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
-                    .padding(.horizontal)
-                } else {
-                    Button {
-                        recorder.stop()
-                        showingSave = true
-                    } label: {
-                        Text("Finish")
-                            .font(.title2.bold())
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .padding(.horizontal)
-                }
+                .padding(.vertical, 24)
             }
-            .navigationTitle("Record")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    if startedAt == nil {
+                        Text("Record").grLabel(size: 11, tracking: 3, color: .grChalk)
+                    } else {
+                        HStack(spacing: 7) {
+                            Circle().fill(Color.grBlaze).frame(width: 8, height: 8)
+                            Text("Rec").grLabel(size: 11, tracking: 3, color: .grBlaze)
+                        }
+                    }
+                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         recorder.stop()
@@ -90,6 +90,8 @@ struct RecordView: View {
                     }
                 }
             }
+            .toolbarBackground(Color.grAsphalt, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .onReceive(timer) { _ in
                 guard let startedAt else { return }
                 elapsed = Date().timeIntervalSince(startedAt)
@@ -109,6 +111,29 @@ struct RecordView: View {
                 Text(saveError ?? "")
             }
             .interactiveDismissDisabled(startedAt != nil)
+        }
+        .tint(.grBlaze)
+        .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private var gpsChip: some View {
+        if let fix = recorder.latestFix {
+            let good = fix.horizontalAccuracyM <= 10
+            HStack(spacing: 6) {
+                Circle().fill(good ? Color.grOK : Color.grWarn).frame(width: 6, height: 6)
+                Text("GPS ±\(Int(fix.horizontalAccuracyM)) M").grLabel(size: 10, tracking: 1.5, color: good ? .grOK : .grWarn)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .overlay(Capsule().stroke((good ? Color.grOK : Color.grWarn).opacity(0.4), lineWidth: 1))
+        } else {
+            HStack(spacing: 6) {
+                Image(systemName: "location.slash").font(.system(size: 10))
+                Text("Acquiring GPS…").grLabel(size: 10, tracking: 1.5, color: .grMuted)
+            }
+            .foregroundStyle(Color.grMuted)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .overlay(Capsule().stroke(Color.grLine, lineWidth: 1))
         }
     }
 

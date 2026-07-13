@@ -3,14 +3,19 @@ import GhostRaceKit
 
 /// The in-race screen. Designed for glances (handlebar mount, mid-stride):
 /// one huge delta number, a track bar with both racers, and color that tells
-/// the story before you can read anything.
+/// the story before you can read anything. Arcade energy is spent on exactly
+/// three beats — countdown, lead change, finish — and nowhere else.
 struct RaceView: View {
     @Environment(\.dismiss) private var dismiss
     let viewModel: RaceViewModel
 
+    @State private var leadBanner: String?
+
+    private var iAmAhead: Bool { viewModel.snapshot?.iAmAhead ?? true }
+
     var body: some View {
         ZStack {
-            background.ignoresSafeArea()
+            backgroundLayer
 
             switch viewModel.phase {
             case .idle, .waitingForOpponent, .headingToStart:
@@ -24,98 +29,135 @@ struct RaceView: View {
                     dismiss()
                 }
             case .aborted(let reason):
-                VStack(spacing: 16) {
-                    Image(systemName: "flag.slash").font(.system(size: 48))
-                    Text(reason).multilineTextAlignment(.center)
-                    Button("Close") { dismiss() }.buttonStyle(.borderedProminent)
-                }
-                .padding()
+                abort(reason)
             }
         }
+        .animation(.easeInOut(duration: 0.6), value: iAmAhead)
         .onAppear { viewModel.begin() }
+        .onChange(of: viewModel.snapshot?.iAmAhead) { old, new in
+            guard let old, let new, old != new else { return }
+            showLeadBanner(new ? "You took the lead" : "\(viewModel.opponentName) took the lead")
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Quit") {
                     viewModel.cancel()
                     dismiss()
                 }
+                .foregroundStyle(.white.opacity(0.7))
             }
         }
         .preferredColorScheme(.dark)
     }
 
-    private var background: Color {
-        guard case .racing = viewModel.phase, let snapshot = viewModel.snapshot else {
-            return Color(.systemBackground)
+    // MARK: Background
+
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        switch viewModel.phase {
+        case .racing:
+            ZStack {
+                Color.grAsphalt
+                Rectangle().fill(RaceField.ahead).opacity(iAmAhead ? 1 : 0)
+                Rectangle().fill(RaceField.behind).opacity(iAmAhead ? 0 : 1)
+            }
+            .ignoresSafeArea()
+        case .finished(let won, _, _):
+            Rectangle().fill(won ? RaceField.victory : RaceField.defeat).ignoresSafeArea()
+        default:
+            Color.grAsphalt.ignoresSafeArea()
         }
-        // Ahead: deep green. Behind: dark red. Instantly readable at a glance.
-        return snapshot.iAmAhead
-            ? Color(red: 0.02, green: 0.25, blue: 0.1)
-            : Color(red: 0.3, green: 0.05, blue: 0.05)
     }
 
+    // MARK: Pre-race / waiting
+
     private var preRace: some View {
-        VStack(spacing: 20) {
-            ProgressView().controlSize(.large)
-            Text(statusText).font(.title3).multilineTextAlignment(.center)
+        VStack(spacing: 22) {
+            GhostMark(size: 84, stroke: .grIce, lineWidth: 1.6)
+                .opacity(0.85)
+            ProgressView().controlSize(.regular).tint(.grIce)
+            Text(statusText)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.grChalk)
+                .multilineTextAlignment(.center)
+
             if case .waitingForOpponent = viewModel.phase, let raceId = viewModel.liveRaceId {
-                VStack(spacing: 8) {
-                    Text("Race ID").font(.caption.bold()).tracking(2).foregroundStyle(.secondary)
+                VStack(spacing: 10) {
+                    Text("Race ID").grLabel(size: 10, tracking: 3, color: .grMuted)
                     Text(raceId)
-                        .font(.footnote.monospaced())
+                        .font(GRFont.instrument(13, weight: .medium))
+                        .foregroundStyle(Color.grIce)
                         .textSelection(.enabled)
                     if let link = URL(string: "ghostrace://race/\(raceId)") {
-                        ShareLink(
-                            item: link,
-                            message: Text("Race me right now on GhostRace! 🏁")
-                        ) {
+                        ShareLink(item: link, message: Text("Race me right now on GhostRace! 🏁")) {
                             Label("Invite your rival", systemImage: "square.and.arrow.up")
+                                .font(.system(size: 15, weight: .semibold))
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(IceButtonStyle())
+                        .fixedSize(horizontal: true, vertical: false)
                     }
                 }
-                .padding()
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+                .padding(18)
+                .background(Color.grPanel, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.grLine, lineWidth: 1))
             }
         }
-        .padding()
+        .padding(28)
     }
 
     private var statusText: String {
         switch viewModel.phase {
-        case .headingToStart: return "Head to the start line.\nThe race begins the moment you cross it."
-        case .waitingForOpponent: return viewModel.statusLine
-        default: return viewModel.statusLine
+        case .headingToStart:
+            return "Head to the start line.\nThe race begins the moment you cross it."
+        default:
+            return viewModel.statusLine
         }
     }
 
+    // MARK: Racing HUD
+
     private var hud: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 22) {
             Spacer()
 
             if let snapshot = viewModel.snapshot {
-                // The big number: gap in seconds when known, meters otherwise.
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
+                    if let banner = leadBanner {
+                        Text(banner)
+                            .font(GRFont.label(12).weight(.heavy))
+                            .tracking(2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.grInk)
+                            .padding(.horizontal, 14).padding(.vertical, 7)
+                            .background(Color.grChalk)
+                            .rotationEffect(.degrees(-2))
+                            .transition(.scale(scale: 0.6).combined(with: .opacity))
+                            .padding(.bottom, 6)
+                    }
                     Text(gapHeadline(snapshot))
-                        .font(.system(size: 88, weight: .black, design: .rounded).monospacedDigit())
+                        .font(GRFont.instrument(80, weight: .heavy))
+                        .foregroundStyle(.white)
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
-                    Text(snapshot.iAmAhead ? "AHEAD" : "BEHIND")
-                        .font(.title3.bold())
-                        .tracking(4)
-                        .opacity(0.8)
+                    Text(snapshot.iAmAhead ? "Ahead" : "Behind")
+                        .font(GRFont.display(20))
+                        .textCase(.uppercase)
+                        .tracking(6)
+                        .foregroundStyle(.white.opacity(0.85))
                 }
-                .foregroundStyle(.white)
 
                 TrackBar(snapshot: snapshot, opponentName: viewModel.opponentName)
-                    .padding(.horizontal)
+                    .padding(.horizontal, 4)
+                    .padding(.top, 8)
 
-                HStack(spacing: 40) {
-                    stat("TIME", RaceCueScheduler.formatDuration(snapshot.elapsedS))
-                    stat("PACE", paceText(snapshot))
-                    stat("TO GO", "\(Int(snapshot.remainingM)) m")
+                HStack {
+                    StatBlock(key: "Time", value: RaceCueScheduler.formatDuration(snapshot.elapsedS), valueColor: .white)
+                    Spacer()
+                    StatBlock(key: "Pace", value: paceText(snapshot), alignment: .center, valueColor: .white)
+                    Spacer()
+                    StatBlock(key: "To go", value: "\(Int(snapshot.remainingM)) m", alignment: .trailing, valueColor: .white)
                 }
-                .foregroundStyle(.white.opacity(0.9))
+                .padding(.horizontal, 2)
             } else {
                 ProgressView().tint(.white)
             }
@@ -123,11 +165,12 @@ struct RaceView: View {
             Spacer()
             if !viewModel.statusLine.isEmpty {
                 Text(viewModel.statusLine)
-                    .font(.footnote)
+                    .font(GRFont.label(11))
                     .foregroundStyle(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
             }
         }
-        .padding()
+        .padding(24)
     }
 
     private func gapHeadline(_ snapshot: RaceSnapshot) -> String {
@@ -143,18 +186,36 @@ struct RaceView: View {
             return String(format: "%.1f km/h", speed * 3.6)
         }
         let secondsPerKm = 1000 / speed
-        return "\(RaceCueScheduler.formatDuration(secondsPerKm)) /km"
+        return "\(RaceCueScheduler.formatDuration(secondsPerKm))/km"
     }
 
-    private func stat(_ label: String, _ value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(label).font(.caption2.bold()).tracking(2).opacity(0.6)
-            Text(value).font(.title3.monospacedDigit().bold())
+    private func abort(_ reason: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "flag.slash").font(.system(size: 46)).foregroundStyle(Color.grMuted)
+            Text(reason)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(Color.grChalk)
+                .multilineTextAlignment(.center)
+            Button("Close") { dismiss() }
+                .buttonStyle(GhostlineButtonStyle())
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .padding(32)
+    }
+
+    private func showLeadBanner(_ text: String) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { leadBanner = text }
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if leadBanner == text {
+                withAnimation(.easeOut(duration: 0.4)) { leadBanner = nil }
+            }
         }
     }
 }
 
-/// The Mario Kart strip: both racers as dots progressing along the course.
+/// The Mario Kart strip: you are a blaze chevron, the opponent is the ghost
+/// glyph riding below the line with a dashed trail behind it.
 struct TrackBar: View {
     let snapshot: RaceSnapshot
     let opponentName: String
@@ -162,59 +223,101 @@ struct TrackBar: View {
     var body: some View {
         GeometryReader { geo in
             let width = geo.size.width
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.white.opacity(0.2))
-                    .frame(height: 6)
-                // Finish flag.
-                Text("🏁")
-                    .offset(x: width - 24, y: -22)
+            let youX = clampedX(fraction(snapshot.myDistanceM), width: width)
+            let oppX = clampedX(fraction(snapshot.opponentDistanceM), width: width)
 
-                racerDot("🟠", name: opponentName, fraction: fraction(snapshot.opponentDistanceM), width: width, above: false)
-                racerDot("🔵", name: "You", fraction: fraction(snapshot.myDistanceM), width: width, above: true)
+            ZStack(alignment: .topLeading) {
+                Capsule().fill(.white.opacity(0.22)).frame(height: 5)
+                    .position(x: width / 2, y: 40)
+                // Start tick + finish checker.
+                Rectangle().fill(.white.opacity(0.45)).frame(width: 2, height: 16)
+                    .position(x: 1, y: 40)
+                CheckerStrip(square: 6).frame(width: 14, height: 22)
+                    .position(x: width - 7, y: 34)
+
+                // Opponent ghost, below the line, with a dashed trail.
+                Capsule()
+                    .stroke(Color.grIce.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [3, 4]))
+                    .frame(width: max(0, oppX - 8), height: 1)
+                    .position(x: oppX / 2, y: 42)
+                racer(above: false, x: oppX, name: opponentName) {
+                    GhostMark(size: 16, stroke: .grIce, lineWidth: 2)
+                }
+                // You, above the line, blaze chevron.
+                racer(above: true, x: youX, name: "You") {
+                    RacerChevron().fill(Color.grBlazeHot)
+                        .frame(width: 16, height: 18)
+                        .shadow(color: .grBlaze.opacity(0.7), radius: 5)
+                }
             }
         }
-        .frame(height: 72)
+        .frame(height: 76)
     }
 
     private func fraction(_ d: Double) -> Double {
         snapshot.courseDistanceM > 0 ? min(1, max(0, d / snapshot.courseDistanceM)) : 0
     }
 
-    private func racerDot(_ emoji: String, name: String, fraction: Double, width: CGFloat, above: Bool) -> some View {
-        VStack(spacing: 2) {
+    private func clampedX(_ f: Double, width: CGFloat) -> CGFloat {
+        max(16, min(width - 16, width * f))
+    }
+
+    private func racer<Glyph: View>(above: Bool, x: CGFloat, name: String, @ViewBuilder glyph: () -> Glyph) -> some View {
+        VStack(spacing: 3) {
             if above {
-                Text(name).font(.caption2.bold()).foregroundStyle(.white)
-                Text(emoji).font(.title3)
+                Text(name).grLabel(size: 9, tracking: 1.5, color: .grBlazeHot)
+                glyph()
             } else {
-                Text(emoji).font(.title3)
-                Text(name).font(.caption2.bold()).foregroundStyle(.white.opacity(0.8))
+                glyph()
+                Text(name).grLabel(size: 9, tracking: 1.5, color: .grIce)
             }
         }
-        .position(x: max(16, min(width - 16, width * fraction)), y: above ? 8 : 56)
-        .animation(.easeInOut(duration: 0.8), value: fraction)
+        .position(x: x, y: above ? 12 : 60)
+        .animation(.easeInOut(duration: 0.8), value: x)
     }
 }
 
+/// Server-synced countdown. A blaze ring drains around the numeral; the whole
+/// thing is one of the three arcade moments in the app.
 struct CountdownView: View {
     let startAt: Date
+    @State private var total: Double = 3
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.1)) { context in
+        TimelineView(.periodic(from: .now, by: 0.05)) { context in
             let remaining = startAt.timeIntervalSince(context.date)
-            VStack(spacing: 12) {
+            let fraction = total > 0 ? max(0, min(1, remaining / total)) : 0
+
+            VStack(spacing: 14) {
+                ZStack {
+                    Circle().stroke(Color.grLine, lineWidth: 3)
+                    Circle()
+                        .trim(from: 0, to: fraction)
+                        .stroke(Color.grBlaze, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    if remaining > 0 {
+                        Text("\(Int(remaining.rounded(.up)))")
+                            .font(GRFont.instrument(120, weight: .heavy))
+                            .foregroundStyle(Color.grChalk)
+                            .contentTransition(.numericText(countsDown: true))
+                    } else {
+                        Text("GO!")
+                            .font(GRFont.display(96))
+                            .foregroundStyle(Color.grOK)
+                    }
+                }
+                .frame(width: 190, height: 190)
+
                 if remaining > 0 {
-                    Text("\(Int(remaining.rounded(.up)))")
-                        .font(.system(size: 140, weight: .black, design: .rounded))
-                        .contentTransition(.numericText(countsDown: true))
-                    Text("GET READY").font(.title3.bold()).tracking(6).opacity(0.7)
-                } else {
-                    Text("GO!")
-                        .font(.system(size: 120, weight: .black, design: .rounded))
-                        .foregroundStyle(.green)
+                    Text("Get ready")
+                        .font(GRFont.display(18))
+                        .textCase(.uppercase)
+                        .tracking(8)
+                        .foregroundStyle(Color.grMuted)
                 }
             }
         }
+        .onAppear { total = max(0.5, startAt.timeIntervalSinceNow) }
     }
 }
 
@@ -225,21 +328,47 @@ struct ResultView: View {
     let onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            Text(won ? "🏆" : "😤").font(.system(size: 96))
-            Text(won ? "Victory!" : "Defeat")
-                .font(.largeTitle.black())
+        VStack(spacing: 18) {
+            Spacer()
+            if won {
+                CheckerStrip(square: 10)
+                    .frame(width: 130, height: 10)
+                    .transition(.move(edge: .top))
+            } else {
+                GhostMark(size: 64, stroke: .grIce, lineWidth: 1.6, smug: true)
+            }
+
+            Text(won ? "Victory" : "Defeat")
+                .font(GRFont.display(46))
+                .textCase(.uppercase)
+                .foregroundStyle(Color.grChalk)
+
             Text(summary)
+                .font(.system(size: 15))
+                .foregroundStyle(Color.grMuted)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .frame(maxWidth: 280)
+
             if !won {
                 Text("Rematch and take it back.")
-                    .font(.callout.italic())
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 15, weight: .semibold))
+                    .italic()
+                    .foregroundStyle(Color.grBlazeHot)
             }
+
+            Spacer()
             Button(won ? "Rub it in later" : "Done") { onDone() }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(won ? AnyButtonStyle(BlazeButtonStyle()) : AnyButtonStyle(GhostlineButtonStyle()))
         }
         .padding(32)
     }
+}
+
+/// Type-erases a ButtonStyle so a view can pick one at runtime.
+struct AnyButtonStyle: ButtonStyle {
+    private let _makeBody: (Configuration) -> AnyView
+    init<S: ButtonStyle>(_ style: S) {
+        _makeBody = { config in AnyView(style.makeBody(configuration: config)) }
+    }
+    func makeBody(configuration: Configuration) -> some View { _makeBody(configuration) }
 }

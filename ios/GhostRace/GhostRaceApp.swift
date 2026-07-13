@@ -20,6 +20,8 @@ struct GhostRaceApp: App {
                     }
                 }
                 .task { await model.bootstrap() }
+                .tint(.grBlaze)
+                .preferredColorScheme(.dark)
         }
     }
 }

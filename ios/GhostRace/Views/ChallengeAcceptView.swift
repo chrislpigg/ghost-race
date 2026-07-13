@@ -16,27 +16,45 @@ struct ChallengeAcceptView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if let details {
-                    challengeCard(details)
-                } else if let loadError {
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                        Text(loadError).multilineTextAlignment(.center)
+            ZStack {
+                Color.grAsphalt.ignoresSafeArea()
+                Group {
+                    if let details {
+                        challengeCard(details)
+                    } else if let loadError {
+                        VStack(spacing: 16) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 32))
+                                .foregroundStyle(Color.grWarn)
+                            Text(loadError)
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.grMuted)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding()
+                    } else {
+                        VStack(spacing: 14) {
+                            ProgressView().tint(.grIce)
+                            Text("Loading challenge…").grLabel(size: 11, tracking: 2)
+                        }
                     }
-                    .padding()
-                } else {
-                    ProgressView("Loading challenge…")
                 }
             }
-            .navigationTitle("Challenge")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Challenge").grLabel(size: 11, tracking: 3, color: .grChalk)
+                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Later") { dismiss() }
+                    Button("Later") { dismiss() }.foregroundStyle(Color.grMuted)
                 }
             }
+            .toolbarBackground(Color.grAsphalt, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
+        .tint(.grBlaze)
+        .preferredColorScheme(.dark)
         .task { await load() }
         .fullScreenCover(item: $activeRace, onDismiss: { dismiss() }) { race in
             RaceView(viewModel: race)
@@ -44,37 +62,46 @@ struct ChallengeAcceptView: View {
     }
 
     private func challengeCard(_ details: APIClient.ChallengeDetails) -> some View {
-        VStack(spacing: 24) {
-            Text("⚔️").font(.system(size: 72))
-            Text("\(details.challengerName) challenged you!")
-                .font(.title2.bold())
+        VStack(spacing: 22) {
+            Spacer()
+            (Text("\(details.challengerName) ").foregroundStyle(Color.grBlaze)
+                + Text("called you out").foregroundStyle(Color.grChalk))
+                .font(GRFont.display(30))
+                .textCase(.uppercase)
                 .multilineTextAlignment(.center)
-            VStack(spacing: 8) {
-                Text(details.segment.name).font(.headline)
-                Text("\(details.segment.activityType == .run ? "🏃" : "🚴") \(Int(details.segment.distanceM)) m")
-                    .foregroundStyle(.secondary)
-                Text("Time to beat: \(RaceCueScheduler.formatDuration(details.ghost.durationS))")
-                    .font(.title3.monospacedDigit().bold())
-                    .padding(.top, 4)
+                .frame(maxWidth: 240)
+
+            VStack(spacing: 10) {
+                RouteSilhouette(polyline: details.segment.polyline, stroke: .grIce, lineWidth: 2.5)
+                    .frame(width: 130, height: 48)
+                Text(details.segment.name)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Color.grChalk)
+                Text("\(details.segment.activityType == .run ? "RUN" : "RIDE") · \(Int(details.segment.distanceM)) M")
+                    .grLabel(size: 10, tracking: 1.5)
+                Text("Time to beat").grLabel(size: 10, tracking: 2.5).padding(.top, 6)
+                Text(RaceCueScheduler.formatDuration(details.ghost.durationS))
+                    .font(GRFont.instrument(36, weight: .heavy))
+                    .foregroundStyle(Color.grChalk)
             }
-            .padding()
+            .padding(22)
             .frame(maxWidth: .infinity)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: 16))
+            .background(Color.grPanel, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.grLine, lineWidth: 1))
 
             Text("You'll race \(details.challengerName)'s ghost — live audio tells you exactly where they were.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.grIceDim)
                 .multilineTextAlignment(.center)
+                .frame(maxWidth: 280)
 
+            Spacer()
             Button {
                 Task { await accept(details) }
             } label: {
                 Text("Accept & race")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(8)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(BlazeButtonStyle())
         }
         .padding(24)
     }

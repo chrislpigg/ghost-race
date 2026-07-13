@@ -15,42 +15,75 @@ struct SegmentDetailView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        List {
-            Section {
-                LabeledContent("Distance", value: "\(Int(segment.distanceM)) m")
-                LabeledContent("Type", value: segment.activityType == .run ? "Run" : "Ride")
-                if let effort = myBestEffort {
-                    LabeledContent("Your best", value: RaceCueScheduler.formatDuration(effort.durationS))
-                }
-            }
-
-            Section("Race") {
-                if let effort = myBestEffort {
-                    Button {
-                        startGhostRace(against: effort, name: "your ghost", challengeToken: nil)
-                    } label: {
-                        Label("Race your ghost", systemImage: "figure.run.circle")
+        ZStack {
+            Color.grAsphalt.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    ZStack {
+                        RouteSilhouette(polyline: segment.polyline, stroke: .grIce, lineWidth: 3, showGates: true)
+                            .frame(height: 190)
+                            .padding(.horizontal, 24)
                     }
-
-                    Button {
-                        Task { await createChallenge(effortId: effort.id) }
-                    } label: {
-                        Label("Challenge a friend", systemImage: "person.2.fill")
-                    }
-                }
-
-                Button {
-                    Task { await createLiveRace() }
-                } label: {
-                    Label(
-                        creatingLiveRace ? "Creating race…" : "Start a live duel",
-                        systemImage: "bolt.fill"
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        LinearGradient(colors: [Color.grPanel, Color.grAsphalt], startPoint: .top, endPoint: .bottom)
                     )
+                    .overlay(alignment: .bottom) { Divider().overlay(Color.grLine) }
+
+                    HStack {
+                        StatBlock(key: "Distance", value: "\(Int(segment.distanceM)) m")
+                        Spacer()
+                        StatBlock(key: "Type", value: segment.activityType == .run ? "Run" : "Ride", alignment: .center)
+                        Spacer()
+                        StatBlock(
+                            key: "Your best",
+                            value: myBestEffort.map { RaceCueScheduler.formatDuration($0.durationS) } ?? "—",
+                            alignment: .trailing,
+                            valueColor: .grIce
+                        )
+                    }
+                    .padding(.horizontal, 20)
+
+                    VStack(spacing: 10) {
+                        if let effort = myBestEffort {
+                            Button {
+                                Task { await createChallenge(effortId: effort.id) }
+                            } label: {
+                                Label("Challenge a friend", systemImage: "person.2.fill")
+                            }
+                            .buttonStyle(BlazeButtonStyle())
+
+                            Button {
+                                startGhostRace(against: effort, name: "your ghost", challengeToken: nil)
+                            } label: {
+                                Label("Race your ghost", systemImage: "figure.run.circle")
+                            }
+                            .buttonStyle(IceButtonStyle())
+                        }
+
+                        Button {
+                            Task { await createLiveRace() }
+                        } label: {
+                            Label(
+                                creatingLiveRace ? "Creating race…" : "Start a live duel",
+                                systemImage: "bolt.fill"
+                            )
+                        }
+                        .buttonStyle(GhostlineButtonStyle())
+                        .disabled(creatingLiveRace)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
                 }
-                .disabled(creatingLiveRace)
+                .padding(.bottom, 40)
             }
         }
         .navigationTitle(segment.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.grAsphalt, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .tint(.grBlaze)
+        .preferredColorScheme(.dark)
         .task { await loadBestEffort() }
         .sheet(item: $challengeURL) { url in
             ShareChallengeSheet(url: url, segmentName: segment.name)
@@ -131,24 +164,32 @@ struct ShareChallengeSheet: View {
     let segmentName: String
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Throw down the gauntlet")
-                .font(.title2.bold())
-            Text("Send this link. When they open it in GhostRace, they race your ghost on \(segmentName) — and you'll both see who really owns it.")
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            ShareLink(
-                item: url,
-                message: Text("I just set a time on \(segmentName). Beat it if you can. 🏁")
-            ) {
-                Label("Share challenge", systemImage: "square.and.arrow.up")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+        ZStack {
+            Color.grAsphalt.ignoresSafeArea()
+            VStack(spacing: 18) {
+                CheckerStrip(square: 11).frame(width: 120, height: 11)
+                Text("Throw down the gauntlet")
+                    .font(GRFont.display(24))
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.grChalk)
+                    .multilineTextAlignment(.center)
+                Text("Send this link. When they open it in GhostRace, they race your ghost on \(segmentName) — and you'll both see who really owns it.")
+                    .font(.system(size: 15))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color.grMuted)
+                    .frame(maxWidth: 300)
+                ShareLink(
+                    item: url,
+                    message: Text("I just set a time on \(segmentName). Beat it if you can. 🏁")
+                ) {
+                    Label("Share challenge", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(BlazeButtonStyle())
+                .padding(.horizontal, 8)
             }
-            .buttonStyle(.borderedProminent)
+            .padding(24)
         }
-        .padding(24)
         .presentationDetents([.medium])
+        .preferredColorScheme(.dark)
     }
 }
