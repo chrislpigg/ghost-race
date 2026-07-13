@@ -1,0 +1,736 @@
+<title>GhostRace — Visual Design v1</title>
+<style>
+  :root{
+    --asphalt:#0A0E15;
+    --panel:#111724;
+    --panel-deep:#0D1119;
+    --line:#212B3D;
+    --chalk:#EDF1F7;
+    --muted:#8C96A8;
+    --blaze:#FF5A1F;
+    --blaze-hot:#FF7A45;
+    --ice:#A8E1EF;
+    --ice-dim:#6C93A1;
+    --ahead-a:#0C4C26; --ahead-b:#04200F;
+    --behind-a:#5C1913; --behind-b:#230A08;
+    --ok:#41D98D;
+    --warn:#F5A524;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  html{background:var(--asphalt)}
+  body{
+    background:var(--asphalt);color:var(--chalk);font-family:var(--sans);
+    line-height:1.55;margin:0;font-size:16px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+
+  /* ---------- typography roles ---------- */
+  .display{
+    font-family:var(--sans);font-weight:900;font-style:italic;
+    text-transform:uppercase;letter-spacing:-.01em;line-height:.95;
+    text-wrap:balance;margin:0;
+  }
+  .eyebrow{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--blaze);margin:0 0 12px;
+  }
+  .eyebrow.ice{color:var(--ice)}
+  p{max-width:62ch}
+  .lede{color:var(--muted);font-size:1.05rem;max-width:58ch}
+  .note{font-family:var(--mono);font-size:.78rem;color:var(--muted);line-height:1.7}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- checker + stripes ---------- */
+  .checker{
+    height:14px;
+    background:repeating-conic-gradient(var(--chalk) 0% 25%, var(--asphalt) 0% 50%) 0 0/14px 14px;
+    opacity:.9;
+  }
+  .stripe{
+    height:3px;border:none;margin:0;
+    background:linear-gradient(90deg,var(--blaze) 0 42%,var(--ice) 42% 46%,transparent 46%);
+  }
+
+  /* ---------- hero ---------- */
+  header.hero{padding:84px 0 56px;border-bottom:1px solid var(--line)}
+  .hero-grid{display:flex;gap:48px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+  .wordmark{font-size:clamp(3rem,7.5vw,5.4rem)}
+  .wordmark .ghost-half{
+    color:transparent;-webkit-text-stroke:2px var(--ice);
+  }
+  .hero-ghost{flex:0 0 auto;padding-bottom:8px}
+  .hero-meta{display:flex;gap:28px;margin-top:28px;flex-wrap:wrap}
+  .hero-meta .note{margin:0}
+
+  /* ---------- sections ---------- */
+  section{padding:72px 0;border-bottom:1px solid var(--line)}
+  h2.display{font-size:clamp(1.6rem,3.4vw,2.3rem);margin-bottom:8px}
+  .section-lede{color:var(--muted);margin-top:6px}
+
+  /* ---------- decision cards ---------- */
+  .calls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:36px}
+  .call{
+    background:var(--panel);border:1px solid var(--line);padding:22px 22px 18px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .call h3{margin:0;font-size:1rem;font-weight:800;letter-spacing:.01em}
+  .call .q{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ice-dim)}
+  .call p{margin:0;font-size:.9rem;color:var(--muted)}
+  .call strong{color:var(--chalk)}
+
+  /* ---------- tokens ---------- */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:36px}
+  .swatch{border:1px solid var(--line)}
+  .swatch .chip{height:76px}
+  .swatch .label{padding:10px 12px;background:var(--panel-deep)}
+  .swatch .label b{display:block;font-size:.82rem;font-weight:700}
+  .swatch .label span{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+
+  .type-specimens{margin-top:44px;display:grid;gap:0;border:1px solid var(--line)}
+  .spec-row{
+    display:grid;grid-template-columns:230px 1fr;gap:24px;align-items:center;
+    padding:22px 24px;background:var(--panel-deep);
+  }
+  .spec-row + .spec-row{border-top:1px solid var(--line)}
+  .spec-row .note{margin:0}
+  @media(max-width:720px){.spec-row{grid-template-columns:1fr;gap:8px}}
+
+  /* ---------- phone frames ---------- */
+  .frames{display:flex;flex-wrap:wrap;gap:36px;margin-top:44px;justify-content:flex-start}
+  .mock{width:300px;display:flex;flex-direction:column;gap:14px}
+  .frame{
+    width:300px;height:632px;border-radius:44px;flex:0 0 auto;
+    border:1px solid #2A3548;background:var(--asphalt);
+    box-shadow:0 24px 60px -24px rgba(0,0,0,.8), inset 0 0 0 6px #05070B;
+    overflow:hidden;position:relative;
+  }
+  .screen{
+    position:absolute;inset:6px;border-radius:38px;overflow:hidden;
+    display:flex;flex-direction:column;background:var(--asphalt);
+  }
+  .notch{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    width:88px;height:24px;border-radius:12px;background:#05070B;z-index:5;
+  }
+  .caption h4{margin:0 0 4px;font-size:.95rem;font-weight:800}
+  .caption .note{margin:0}
+
+  /* screen building blocks */
+  .s-top{display:flex;justify-content:space-between;align-items:center;padding:52px 20px 0;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase}
+  .s-top .quit{color:rgba(255,255,255,.55)}
+  .s-body{flex:1;display:flex;flex-direction:column;padding:0 20px 26px}
+
+  /* HUD */
+  .hud-ahead{background:radial-gradient(120% 90% at 50% 0%,var(--ahead-a),var(--ahead-b))}
+  .hud-behind{background:radial-gradient(120% 90% at 50% 0%,var(--behind-a),var(--behind-b))}
+  .hud-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
+  .delta{
+    font-family:var(--mono);font-weight:800;font-size:74px;line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:-.03em;
+  }
+  .delta small{font-size:40px;font-weight:700}
+  .hud-state{
+    font-weight:900;font-style:italic;font-size:.95rem;letter-spacing:.42em;
+    text-transform:uppercase;opacity:.85;margin-top:6px;padding-left:.42em;
+  }
+  .lead-flash{
+    margin:14px 0 0;padding:7px 14px;font-weight:900;font-style:italic;font-size:.72rem;
+    letter-spacing:.18em;text-transform:uppercase;color:#04200F;background:var(--chalk);
+    transform:skewX(-8deg);
+  }
+  .trackbar{margin:26px 0 10px;position:relative;height:74px}
+  .tb-line{position:absolute;left:0;right:0;top:36px;height:4px;background:rgba(255,255,255,.22);border-radius:2px}
+  .tb-finish{
+    position:absolute;right:0;top:26px;width:14px;height:24px;
+    background:repeating-conic-gradient(var(--chalk) 0% 25%, transparent 0% 50%) 0 0/7px 7px;
+    border:1px solid rgba(255,255,255,.5);
+  }
+  .tb-start{position:absolute;left:0;top:30px;width:2px;height:16px;background:rgba(255,255,255,.45)}
+  .racer{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translateX(-50%)}
+  .racer .tag{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase}
+  .racer.you{top:2px}
+  .racer.opp{top:40px}
+  .chev{width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:14px solid var(--blaze);filter:drop-shadow(0 0 6px rgba(255,90,31,.7))}
+  .ghost-dot{opacity:.85;filter:drop-shadow(0 0 6px rgba(168,225,239,.5))}
+  .hud-stats{display:flex;justify-content:space-between;padding:8px 2px 0}
+  .stat{display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+  .stat .k{font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .stat .v{font-family:var(--mono);font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums}
+  .hud-foot{font-family:var(--mono);font-size:.62rem;color:rgba(255,255,255,.5);text-align:center;padding-top:14px}
+
+  /* countdown */
+  .count-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px}
+  .count-ring{
+    width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    border:3px solid var(--line);
+    background:
+      conic-gradient(var(--blaze) 0 66%, transparent 66% 100%);
+    -webkit-mask:radial-gradient(circle, transparent 0 88px, #000 89px);
+            mask:radial-gradient(circle, transparent 0 88px, #000 89px);
+    position:absolute;
+  }
+  .count-wrap{position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center}
+  .count-n{font-family:var(--mono);font-weight:800;font-size:120px;line-height:1;font-variant-numeric:tabular-nums}
+  .count-label{font-weight:900;font-style:italic;letter-spacing:.5em;padding-left:.5em;text-transform:uppercase;font-size:.85rem;color:var(--muted)}
+  .count-sub{font-family:var(--mono);font-size:.66rem;color:var(--ice-dim);display:flex;align-items:center;gap:6px}
+  .ready-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+
+  /* results */
+  .res-victory{background:radial-gradient(130% 80% at 50% 0%,#0B3D20,var(--asphalt) 70%)}
+  .res-defeat{background:radial-gradient(130% 80% at 50% 0%,#471410,var(--asphalt) 70%)}
+  .res-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;text-align:center}
+  .res-word{font-size:2.5rem}
+  .res-sub{color:var(--muted);font-size:.85rem;max-width:22ch;margin:0}
+  .series-chip{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;padding:8px 14px;
+    border:1px solid var(--line);background:rgba(0,0,0,.35);
+  }
+  .series-chip b{color:var(--ok)}
+  .res-defeat .series-chip b{color:#FF6B5B}
+  .btn{
+    font-family:var(--sans);font-weight:800;font-size:.85rem;text-align:center;
+    padding:14px 18px;border-radius:10px;letter-spacing:.01em;
+  }
+  .btn-blaze{background:var(--blaze);color:#1A0B04}
+  .btn-ghostline{border:1px solid var(--line);color:var(--chalk)}
+  .btn-ice{background:rgba(168,225,239,.12);color:var(--ice);border:1px solid rgba(168,225,239,.35)}
+  .res-actions{display:flex;flex-direction:column;gap:10px;padding-top:10px;width:100%}
+
+  /* home */
+  .home-head{display:flex;justify-content:space-between;align-items:center;padding:56px 20px 18px}
+  .home-logo{font-weight:900;font-style:italic;text-transform:uppercase;font-size:1.05rem;letter-spacing:-.01em}
+  .home-logo span{color:transparent;-webkit-text-stroke:1px var(--ice)}
+  .rec-btn{
+    width:38px;height:38px;border-radius:50%;background:var(--blaze);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(255,90,31,.45);
+  }
+  .rec-btn::after{content:"";width:12px;height:12px;border-radius:3px;background:#1A0B04}
+  .h-section{font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);padding:14px 20px 8px}
+  .rival-card{
+    margin:0 16px 10px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;border-left:3px solid var(--blaze);
+  }
+  .rival-card.losing{border-left-color:#FF6B5B}
+  .rival-card .who b{display:block;font-size:.92rem}
+  .rival-card .who span{font-size:.7rem;color:var(--muted)}
+  .rival-score{font-family:var(--mono);font-weight:800;font-size:1.35rem;font-variant-numeric:tabular-nums}
+  .rival-score.win{color:var(--ok)}
+  .rival-score.loss{color:#FF6B5B}
+  .seg-row{
+    margin:0 16px 10px;padding:12px 14px;background:var(--panel-deep);border:1px solid var(--line);
+    display:flex;gap:12px;align-items:center;
+  }
+  .seg-thumb{width:52px;height:40px;flex:0 0 auto}
+  .seg-thumb polyline{fill:none;stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+  .seg-row .meta b{display:block;font-size:.85rem}
+  .seg-row .meta span{font-family:var(--mono);font-size:.66rem;color:var(--muted)}
+
+  /* segment detail */
+  .segd-hero{position:relative;height:210px;background:linear-gradient(180deg,#101623,var(--asphalt));border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+  .segd-hero svg{width:82%;height:auto}
+  .segd-hero polyline{fill:none;stroke:var(--ice);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .gate{font-family:var(--mono);font-size:.55rem;letter-spacing:.12em;fill:var(--muted);text-transform:uppercase}
+  .segd-stats{display:flex;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .segd-title{padding:52px 20px 0;font-size:1.25rem}
+  .segd-actions{display:flex;flex-direction:column;gap:10px;padding:18px 16px}
+
+  /* record */
+  .rec-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+  .rec-timer{font-family:var(--mono);font-weight:800;font-size:64px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .rec-dist{font-family:var(--mono);font-size:1.1rem;color:var(--muted)}
+  .gps-chip{
+    margin-top:14px;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;
+    padding:6px 12px;border:1px solid rgba(65,217,141,.4);color:var(--ok);border-radius:20px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .gps-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  .rec-live{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--blaze)}
+  .rec-live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--blaze);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .btn-stop{background:#E5382A;color:#fff}
+
+  /* challenge */
+  .chal-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;text-align:center;align-items:center}
+  .chal-head{font-size:1.5rem;max-width:10ch}
+  .chal-head em{font-style:italic;color:var(--blaze)}
+  .chal-card{width:100%;background:var(--panel);border:1px solid var(--line);padding:18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .chal-card svg{width:120px;height:44px}
+  .chal-card polyline{fill:none;stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+  .beat-k{font-family:var(--mono);font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted)}
+  .beat-v{font-family:var(--mono);font-weight:800;font-size:2.2rem;font-variant-numeric:tabular-nums;color:var(--chalk)}
+  .chal-note{font-family:var(--mono);font-size:.62rem;color:var(--ice-dim);max-width:26ch;line-height:1.7}
+
+  /* trackbar anatomy */
+  .anatomy{
+    margin-top:44px;background:var(--panel-deep);border:1px solid var(--line);
+    padding:56px 40px 40px;overflow-x:auto;
+  }
+  .anatomy-inner{min-width:640px;position:relative;height:170px}
+  .an-line{position:absolute;left:0;right:0;top:84px;height:5px;background:rgba(255,255,255,.18);border-radius:3px}
+  .an-finish{position:absolute;right:0;top:68px;width:20px;height:36px;background:repeating-conic-gradient(var(--chalk) 0% 25%, transparent 0% 50%) 0 0/10px 10px;border:1px solid rgba(255,255,255,.5)}
+  .an-start{position:absolute;left:0;top:74px;width:3px;height:24px;background:rgba(255,255,255,.4)}
+  .an-racer{position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;transform:translateX(-50%)}
+  .an-racer .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase}
+  .an-chev{width:0;height:0;border-top:11px solid transparent;border-bottom:11px solid transparent;border-left:20px solid var(--blaze);filter:drop-shadow(0 0 10px rgba(255,90,31,.7))}
+  .an-note{position:absolute;font-family:var(--mono);font-size:.66rem;color:var(--muted);max-width:180px;line-height:1.6}
+  .an-note::before{content:"";display:block;width:1px;height:18px;background:var(--line);margin:0 0 6px 2px}
+  .trail{position:absolute;top:86px;height:2px;background:repeating-linear-gradient(90deg,rgba(168,225,239,.5) 0 6px,transparent 6px 12px)}
+
+  /* motion table */
+  .motion{margin-top:36px;border:1px solid var(--line)}
+  .m-row{display:grid;grid-template-columns:200px 1fr;border-top:1px solid var(--line)}
+  .m-row:first-child{border-top:none}
+  .m-row > div{padding:16px 20px}
+  .m-row .m-k{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blaze);background:var(--panel-deep)}
+  .m-row .m-v{font-size:.88rem;color:var(--muted)}
+  .m-row .m-v b{color:var(--chalk)}
+  @media(max-width:640px){.m-row{grid-template-columns:1fr}}
+
+  footer{padding:56px 0 80px}
+  footer .note{max-width:70ch}
+
+  @media(prefers-reduced-motion:reduce){
+    .rec-live::before{animation:none}
+  }
+  :focus-visible{outline:2px solid var(--blaze);outline-offset:2px}
+</style>
+
+<div class="checker"></div>
+<hr class="stripe">
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Visual design · v1 · handoff spec</p>
+        <h1 class="display wordmark">Ghost<span class="ghost-half">Race</span></h1>
+        <div class="hero-meta">
+          <p class="note">MARIO KART FOR THE REAL WORLD</p>
+          <p class="note">iOS 17+ · SWIFTUI</p>
+          <p class="note">DARK-ONLY BY DESIGN</p>
+        </div>
+      </div>
+      <div class="hero-ghost">
+        <svg width="120" height="120" viewBox="0 0 24 24" role="img" aria-label="GhostRace mark: a ghost with a checkered hem">
+          <defs>
+            <pattern id="chk" width="4" height="4" patternUnits="userSpaceOnUse">
+              <rect width="2" height="2" fill="#EDF1F7"/><rect x="2" y="2" width="2" height="2" fill="#EDF1F7"/>
+            </pattern>
+          </defs>
+          <path d="M12 2C7.6 2 4 5.6 4 10v11l2.7-2 2.6 2 2.7-2 2.6 2 2.7-2 2.7 2V10c0-4.4-3.6-8-8-8z" fill="none" stroke="#A8E1EF" stroke-width="1.4"/>
+          <path d="M4 16v5l2.7-2 2.6 2 2.7-2 2.6 2 2.7-2 2.7 2v-5" fill="url(#chk)" opacity=".8" stroke="none"/>
+          <circle cx="9.2" cy="10" r="1.3" fill="#A8E1EF"/>
+          <circle cx="14.8" cy="10" r="1.3" fill="#A8E1EF"/>
+        </svg>
+      </div>
+    </div>
+    <p class="lede" style="margin-top:32px">
+      The identity lives where the product does: on the road, after dark, against a friend.
+      <b style="color:var(--chalk)">You are blaze orange</b> — hi-vis, the color runners actually wear.
+      <b style="color:var(--chalk)">The ghost is spectral ice</b> — an outline, never solid.
+      Everything sits on asphalt, and every number is set in mono like a stopwatch.
+    </p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">01 · The calls</p>
+    <h2 class="display">Five open questions, answered</h2>
+    <div class="calls">
+      <div class="call">
+        <span class="q">Q1 · Brand mark</span>
+        <h3>The checkered ghost</h3>
+        <p>A ghost outline whose wavy hem carries the finish-flag checker. Wordmark is heavy oblique caps — <strong>"Ghost" solid, "Race" as an outline</strong>, the ghost of the word itself.</p>
+      </div>
+      <div class="call">
+        <span class="q">Q2 · Racer identity</span>
+        <h3>Shape before color</h3>
+        <p><strong>You = a blaze chevron</strong> (a direction, a vehicle). <strong>Opponent = the ghost glyph</strong> in ice with a dashed trail. Distinguishable in grayscale — colorblind-safe by form, not hue.</p>
+      </div>
+      <div class="call">
+        <span class="q">Q3 · Segment detail</span>
+        <h3>Route silhouette hero — yes, in v1</h3>
+        <p>The polyline already exists in the data. Drawn as a single ice stroke on asphalt it makes every segment feel like <strong>a named circuit</strong>, not a database row. No map tiles needed.</p>
+      </div>
+      <div class="call">
+        <span class="q">Q4 · How far toward "game"</span>
+        <h3>Arcade at the moments, athletic at rest</h3>
+        <p>Full game energy is spent on exactly three beats: <strong>countdown, lead change, finish</strong>. Everything between is a legible sports instrument. No ambient particles, no screen shake while racing.</p>
+      </div>
+      <div class="call">
+        <span class="q">Q5 · Light mode?</span>
+        <h3>Dark-only, committed</h3>
+        <p>The race flow already forces dark; splitting the app into two worlds halves the identity. One night-race world, tuned for <strong>max-brightness sunlight legibility</strong> where it counts (the HUD).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">02 · Tokens</p>
+    <h2 class="display">Palette &amp; type</h2>
+    <p class="section-lede">Two identity colors, two full-screen race states, semantic green/orange for status. Nothing else.</p>
+
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#0A0E15"></div><div class="label"><b>Asphalt</b><span>#0A0E15 · ground</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#111724"></div><div class="label"><b>Panel</b><span>#111724 · surfaces</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#FF5A1F"></div><div class="label"><b>Blaze</b><span>#FF5A1F · you / primary</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#A8E1EF"></div><div class="label"><b>Spectral&nbsp;Ice</b><span>#A8E1EF · the ghost</span></div></div>
+      <div class="swatch"><div class="chip" style="background:linear-gradient(180deg,#0C4C26,#04200F)"></div><div class="label"><b>Ahead</b><span>#0C4C26 · race field</span></div></div>
+      <div class="swatch"><div class="chip" style="background:linear-gradient(180deg,#5C1913,#230A08)"></div><div class="label"><b>Behind</b><span>#5C1913 · race field</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#EDF1F7"></div><div class="label"><b>Chalk</b><span>#EDF1F7 · text / start line</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#41D98D"></div><div class="label"><b>OK green</b><span>#41D98D · GPS good, wins</span></div></div>
+    </div>
+
+    <div class="type-specimens">
+      <div class="spec-row">
+        <p class="note">DISPLAY<br>SF Pro · Black Italic · caps<br><span style="color:var(--ice-dim)">headlines, states, moments</span></p>
+        <div class="display" style="font-size:2.4rem">Take it back</div>
+      </div>
+      <div class="spec-row">
+        <p class="note">INSTRUMENT<br>SF Mono · Heavy · tabular<br><span style="color:var(--ice-dim)">every number in the app</span></p>
+        <div class="num" style="font-weight:800;font-size:2.6rem;letter-spacing:-.03em">+07<span style="font-size:1.6rem">s</span>&nbsp;&nbsp;4:38<span style="font-size:1.3rem;color:var(--muted)">/km</span></div>
+      </div>
+      <div class="spec-row">
+        <p class="note">LABEL<br>SF Mono · caps · +0.22em<br><span style="color:var(--ice-dim)">eyebrows, stat keys, chips</span></p>
+        <div style="font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)">TIME TO BEAT · SERIES 3–2 · GPS ±6M</div>
+      </div>
+      <div class="spec-row">
+        <p class="note">BODY<br>SF Pro · Regular<br><span style="color:var(--ice-dim)">explainers, trash talk</span></p>
+        <div style="font-size:1.05rem;max-width:34ch">Send this link. When they open it, they race your ghost — and you'll both see who really owns it.</div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:20px">This spec approximates SF with system stacks; in SwiftUI use <b style="color:var(--chalk)">.system(design:&nbsp;.default).weight(.black).italic()</b> for display and <b style="color:var(--chalk)">.system(design:&nbsp;.monospaced)</b> for instruments.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">03 · The flagship</p>
+    <h2 class="display">Race flow</h2>
+    <p class="section-lede">Read at arm's length, mid-stride, in sunlight. Color states the situation; the delta confirms it; everything else is optional.</p>
+
+    <div class="frames">
+
+      <!-- HUD AHEAD -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen hud-ahead">
+          <div class="s-top"><span class="quit">✕ quit</span><span style="opacity:.55">River Loop</span></div>
+          <div class="s-body">
+            <div class="hud-center">
+              <div class="lead-flash">You took the lead</div>
+              <div class="delta">+07<small>s</small></div>
+              <div class="hud-state">Ahead</div>
+            </div>
+            <div class="trackbar">
+              <div class="tb-line"></div><div class="tb-start"></div><div class="tb-finish"></div>
+              <div class="racer opp" style="left:56%">
+                <svg class="ghost-dot" width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10v11l2.7-2 2.6 2 2.7-2 2.6 2 2.7-2 2.7 2V10c0-4.4-3.6-8-8-8z" fill="none" stroke="#A8E1EF" stroke-width="2"/><circle cx="9.2" cy="10" r="1.4" fill="#A8E1EF"/><circle cx="14.8" cy="10" r="1.4" fill="#A8E1EF"/></svg>
+                <span class="tag" style="color:var(--ice)">Alex</span>
+              </div>
+              <div class="racer you" style="left:64%">
+                <span class="tag" style="color:var(--blaze-hot)">You</span>
+                <div class="chev"></div>
+              </div>
+            </div>
+            <div class="hud-stats">
+              <div class="stat"><span class="k">Time</span><span class="v">04:12</span></div>
+              <div class="stat"><span class="k">Pace</span><span class="v">4:38/km</span></div>
+              <div class="stat"><span class="k">To go</span><span class="v">420 m</span></div>
+            </div>
+            <div class="hud-foot">audio on · racing alex's ghost</div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>HUD — ahead</h4>
+          <p class="note">Green field. Lead-change banner holds 2.5&nbsp;s then fades — the jingle and overtake haptic fire with it. Delta is mono 800, tabular, never reflows.</p>
+        </div>
+      </div>
+
+      <!-- HUD BEHIND -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen hud-behind">
+          <div class="s-top"><span class="quit">✕ quit</span><span style="opacity:.55">River Loop</span></div>
+          <div class="s-body">
+            <div class="hud-center">
+              <div class="delta">−12<small>s</small></div>
+              <div class="hud-state">Behind</div>
+            </div>
+            <div class="trackbar">
+              <div class="tb-line"></div><div class="tb-start"></div><div class="tb-finish"></div>
+              <div class="racer opp" style="left:72%">
+                <svg class="ghost-dot" width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10v11l2.7-2 2.6 2 2.7-2 2.6 2 2.7-2 2.7 2V10c0-4.4-3.6-8-8-8z" fill="none" stroke="#A8E1EF" stroke-width="2"/><circle cx="9.2" cy="10" r="1.4" fill="#A8E1EF"/><circle cx="14.8" cy="10" r="1.4" fill="#A8E1EF"/></svg>
+                <span class="tag" style="color:var(--ice)">Alex</span>
+              </div>
+              <div class="racer you" style="left:58%">
+                <span class="tag" style="color:var(--blaze-hot)">You</span>
+                <div class="chev"></div>
+              </div>
+            </div>
+            <div class="hud-stats">
+              <div class="stat"><span class="k">Time</span><span class="v">07:03</span></div>
+              <div class="stat"><span class="k">Pace</span><span class="v">4:51/km</span></div>
+              <div class="stat"><span class="k">To go</span><span class="v">180 m</span></div>
+            </div>
+            <div class="hud-foot">final stretch — cues escalating</div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>HUD — behind</h4>
+          <p class="note">Oxblood field, not alarm-red: urgent, still legible under sun. Sign on the delta + wordmark + dot order repeat the state three ways for colorblind safety.</p>
+        </div>
+      </div>
+
+      <!-- COUNTDOWN -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen">
+          <div class="s-top"><span class="quit">✕ quit</span><span style="opacity:.55">Live duel</span></div>
+          <div class="s-body">
+            <div class="count-center">
+              <div class="count-wrap">
+                <div class="count-ring" role="presentation"></div>
+                <div class="count-n">2</div>
+              </div>
+              <div class="count-label">Get ready</div>
+              <div class="count-sub"><span class="ready-dot"></span>alex is on the line · synced start</div>
+            </div>
+            <div class="hud-foot" style="padding-bottom:8px">server countdown · both phones fire GO together</div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Countdown</h4>
+          <p class="note">Blaze ring drains around the numeral; each tick lands with a tone + tap. "GO" replaces everything at 140&nbsp;pt in OK-green with a single hard flash of the whole screen.</p>
+        </div>
+      </div>
+
+      <!-- VICTORY -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen res-victory">
+          <div class="s-body" style="padding-top:52px">
+            <div class="res-center">
+              <div class="checker" style="width:120px;height:10px;background-size:10px 10px"></div>
+              <h3 class="display res-word">Victory</h3>
+              <p class="res-sub">You beat Alex's ghost by 7 seconds on River Loop.</p>
+              <div class="series-chip">SERIES vs ALEX · <b>4–2</b> · you lead</div>
+            </div>
+            <div class="res-actions">
+              <div class="btn btn-blaze">Rub it in later</div>
+              <div class="btn btn-ghostline">Rematch</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Result — victory</h4>
+          <p class="note">Checker strip drops in from the top like tape at the line; winner taunt sound plays once. The series chip is the retention hook — it updates in view.</p>
+        </div>
+      </div>
+
+      <!-- DEFEAT -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen res-defeat">
+          <div class="s-body" style="padding-top:52px">
+            <div class="res-center">
+              <svg width="54" height="54" viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10v11l2.7-2 2.6 2 2.7-2 2.6 2 2.7-2 2.7 2V10c0-4.4-3.6-8-8-8z" fill="none" stroke="#A8E1EF" stroke-width="1.6"/><path d="M8.5 10.5l2-1M15.5 10.5l-2-1" stroke="#A8E1EF" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <h3 class="display res-word">Defeat</h3>
+              <p class="res-sub">Alex's ghost finished 12 seconds ahead.</p>
+              <div class="series-chip">SERIES vs ALEX · <b>3–3</b> · all square</div>
+            </div>
+            <div class="res-actions">
+              <div class="btn btn-blaze">Rematch — take it back</div>
+              <div class="btn btn-ghostline">Done</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Result — defeat</h4>
+          <p class="note">The ghost gets smug eyes. Primary action is the rematch, not the exit — defeat is the screen most likely to start the next race.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">04 · Signature component</p>
+    <h2 class="display">TrackBar anatomy</h2>
+    <p class="section-lede">The Mario Kart strip. Every rule here exists so it reads in one glance at 12&nbsp;km/h.</p>
+
+    <div class="anatomy">
+      <div class="anatomy-inner">
+        <div class="an-line"></div>
+        <div class="an-start"></div>
+        <div class="an-finish"></div>
+        <div class="trail" style="left:38%;width:24%"></div>
+        <div class="an-racer" style="left:62%;top:96px">
+          <svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10v11l2.7-2 2.6 2 2.7-2 2.6 2 2.7-2 2.7 2V10c0-4.4-3.6-8-8-8z" fill="none" stroke="#A8E1EF" stroke-width="2"/><circle cx="9.2" cy="10" r="1.4" fill="#A8E1EF"/><circle cx="14.8" cy="10" r="1.4" fill="#A8E1EF"/></svg>
+          <span class="tag" style="color:var(--ice)">Alex</span>
+        </div>
+        <div class="an-racer" style="left:74%;top:32px">
+          <span class="tag" style="color:var(--blaze-hot)">You</span>
+          <div class="an-chev"></div>
+        </div>
+        <div class="an-note" style="left:0;top:0">start gate — thin chalk tick, no label needed</div>
+        <div class="an-note" style="left:30%;top:118px">ghost rides <b style="color:var(--chalk)">below</b> the line with a dashed ice trail — where it's been, not just where it is</div>
+        <div class="an-note" style="right:0;top:0;text-align:right">finish is always a checker block, pinned; dots clamp 16&nbsp;px inside both ends</div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:18px">
+      Motion: dots ease 0.8&nbsp;s per tick (matches GPS cadence). On a lead change the chevron passes <b style="color:var(--chalk)">through</b> the ghost with a 200&nbsp;ms ice shimmer — the one moment the strip is allowed to show off.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">05 · Core screens</p>
+    <h2 class="display">Everything before the gun</h2>
+    <p class="section-lede">Quiet, instrument-grade surfaces. The arcade energy stays in the race flow.</p>
+
+    <div class="frames">
+
+      <!-- HOME -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen">
+          <div class="home-head">
+            <div class="home-logo">Ghost<span>Race</span></div>
+            <div class="rec-btn" title="Record"></div>
+          </div>
+          <div class="h-section">Rivalries</div>
+          <div class="rival-card">
+            <div class="who"><b>Alex</b><span>You lead the series</span></div>
+            <div class="rival-score win">4–2</div>
+          </div>
+          <div class="rival-card losing">
+            <div class="who"><b>Sam</b><span>Sam leads the series</span></div>
+            <div class="rival-score loss">1–3</div>
+          </div>
+          <div class="h-section">My segments</div>
+          <div class="seg-row">
+            <svg class="seg-thumb" viewBox="0 0 52 40"><polyline points="4,34 12,20 20,26 30,8 40,16 48,6"/></svg>
+            <div class="meta"><b>River Loop</b><span>RUN · 1 240 M · BEST 5:47</span></div>
+          </div>
+          <div class="seg-row">
+            <svg class="seg-thumb" viewBox="0 0 52 40"><polyline points="4,10 14,30 26,24 34,34 44,14 48,20"/></svg>
+            <div class="meta"><b>Canal Sprint</b><span>RIDE · 3 800 M · BEST 7:12</span></div>
+          </div>
+          <div class="seg-row">
+            <svg class="seg-thumb" viewBox="0 0 52 40"><polyline points="4,20 16,12 24,28 36,10 48,26"/></svg>
+            <div class="meta"><b>Hill Repeat</b><span>RUN · 640 M · BEST 3:05</span></div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Home</h4>
+          <p class="note">Rivalries outrank segments — the feud is the product. Card edge color = who leads. Record is the lone blaze element on screen; it's the only "start something" action.</p>
+        </div>
+      </div>
+
+      <!-- SEGMENT DETAIL -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen">
+          <h3 class="display segd-title">River Loop</h3>
+          <div class="segd-hero">
+            <svg viewBox="0 0 240 130">
+              <polyline points="16,110 48,60 84,80 128,24 168,52 224,18"/>
+              <circle cx="16" cy="110" r="4" fill="#EDF1F7"/>
+              <rect x="218" y="10" width="12" height="12" fill="none" stroke="#EDF1F7" stroke-width="1.5"/>
+              <text x="16" y="126" class="gate">start</text>
+              <text x="196" y="38" class="gate">finish</text>
+            </svg>
+          </div>
+          <div class="segd-stats">
+            <div class="stat"><span class="k">Distance</span><span class="v">1 240 m</span></div>
+            <div class="stat"><span class="k">Type</span><span class="v">Run</span></div>
+            <div class="stat"><span class="k">Your best</span><span class="v">5:47</span></div>
+          </div>
+          <div class="segd-actions">
+            <div class="btn btn-blaze">Challenge a friend</div>
+            <div class="btn btn-ice">Race your ghost</div>
+            <div class="btn btn-ghostline">⚡ Start a live duel</div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Segment detail</h4>
+          <p class="note">The route silhouette makes it a circuit with a name. Challenge is primary (blaze) — it feeds the viral loop; self-race is the ice action; live duel stays quiet until v2 push invites.</p>
+        </div>
+      </div>
+
+      <!-- RECORD -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen">
+          <div class="s-top"><span class="quit">✕ cancel</span><span class="rec-live">Rec</span></div>
+          <div class="s-body">
+            <div class="rec-center">
+              <div class="rec-timer">12:07</div>
+              <div class="rec-dist">2 340 m</div>
+              <div class="gps-chip">GPS ±6 M</div>
+            </div>
+            <div class="btn btn-stop">Finish</div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Record</h4>
+          <p class="note">A stopwatch, nothing else. GPS chip flips orange above ±10&nbsp;m. Finish is the only red button in the app — reserved for "stop the clock".</p>
+        </div>
+      </div>
+
+      <!-- CHALLENGE ACCEPT -->
+      <div class="mock">
+        <div class="frame"><div class="notch"></div><div class="screen">
+          <div class="s-top"><span class="quit">later</span><span style="opacity:.55">Challenge</span></div>
+          <div class="s-body">
+            <div class="chal-center">
+              <h3 class="display chal-head"><em>Alex</em> called you out</h3>
+              <div class="chal-card">
+                <svg viewBox="0 0 120 44"><polyline points="6,38 22,16 40,26 62,8 84,20 114,6"/></svg>
+                <b style="font-size:.95rem">River Loop</b>
+                <span class="note" style="margin:0">RUN · 1 240 M</span>
+                <span class="beat-k">Time to beat</span>
+                <span class="beat-v">5:47</span>
+              </div>
+              <p class="chal-note">you'll race alex's ghost — live audio tells you exactly where they were</p>
+            </div>
+            <div class="res-actions">
+              <div class="btn btn-blaze">Accept &amp; race</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="caption">
+          <h4>Challenge accept — the viral loop</h4>
+          <p class="note">One screen from link-tap to race. The time to beat is the largest number — it's the taunt. "Later" is deliberately small; this screen wants a yes.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">06 · Motion &amp; sound moments</p>
+    <h2 class="display">Where the game lives</h2>
+    <div class="motion">
+      <div class="m-row"><div class="m-k">Countdown</div><div class="m-v">Blaze ring drains per second, numeral swaps with a hard cut (no crossfade). <b>GO</b> = full-screen green flash, 120&nbsp;ms, once. Tone + haptic tick per number.</div></div>
+      <div class="m-row"><div class="m-k">Lead change</div><div class="m-v">White banner skews in ("YOU TOOK THE LEAD" / "ALEX TOOK THE LEAD"), field crossfades green↔red over 600&nbsp;ms, chevron shimmers through the ghost on the TrackBar. Jingle or warning tone + distinct haptic.</div></div>
+      <div class="m-row"><div class="m-k">Final stretch</div><div class="m-v">No new visuals — audio cadence escalates (already in RaceCueScheduler). The footnote line switches to "final stretch". Restraint here makes the finish land.</div></div>
+      <div class="m-row"><div class="m-k">Finish</div><div class="m-v">Checker strip wipes down over the HUD like tape at the line, then the result screen settles. Victory taunt / defeat sting.</div></div>
+      <div class="m-row"><div class="m-k">Everything else</div><div class="m-v">0.8&nbsp;s ease on TrackBar dots, standard sheet transitions, <b>nothing ambient</b>. Respect Reduce Motion: cuts instead of wipes, no shimmer.</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="eyebrow ice">Handoff</p>
+    <p class="note">
+      Implementation targets <b style="color:var(--chalk)">ios/GhostRace/</b> (SwiftUI, iOS 17+). Tokens → a Theme.swift + asset catalog; display face = SF Pro Black Italic via .system().weight(.black).italic(); instruments = SF Mono via .monospaced(). All states, data, and copy per <b style="color:var(--chalk)">docs/design-brief.md</b> — this page decides only how it looks. Accessibility contract: ahead/behind never rely on hue alone (sign + wordmark + dot order); Dynamic Type scales all pre/post-race screens; HUD caps at accessibility sizes.
+    </p>
+  </div>
+</footer>
+
+<hr class="stripe" style="background:linear-gradient(90deg,var(--ice) 0 42%,var(--blaze) 42% 46%,transparent 46%)">
+<div class="checker"></div>
