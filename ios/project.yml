@@ -1,0 +1,63 @@
+# XcodeGen project definition. On your Mac:
+#   brew install xcodegen
+#   cd ghost-race/ios && xcodegen generate
+#   open GhostRace.xcodeproj
+name: GhostRace
+options:
+  bundleIdPrefix: com.ghostrace
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  GhostRaceKit:
+    path: GhostRaceKit
+
+targets:
+  GhostRace:
+    type: application
+    platform: iOS
+    sources:
+      - GhostRace
+    dependencies:
+      - package: GhostRaceKit
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: GhostRace/Info.plist
+      properties:
+        CFBundleDisplayName: GhostRace
+        UILaunchScreen: {}
+        UIBackgroundModes:
+          - location
+          - audio
+        NSLocationWhenInUseUsageDescription: >-
+          GhostRace uses your location to time your segments and race your
+          rivals in real time.
+        NSLocationAlwaysAndWhenInUseUsageDescription: >-
+          Allowing background location keeps the race running while your
+          screen is off or you're using another app mid-race.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.ghostrace.challenge
+            CFBundleURLSchemes:
+              - ghostrace
+        NSAppTransportSecurity:
+          # MVP convenience: the dev server runs plain http on your LAN.
+          # Remove before any real distribution.
+          NSAllowsLocalNetworking: true
+
+schemes:
+  GhostRace:
+    build:
+      targets:
+        GhostRace: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - package: GhostRaceKit/GhostRaceKitTests
