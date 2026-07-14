@@ -17,11 +17,16 @@ business: **does a challenge link convert a friend into a completed race?**
 ghost-race/
   docs/market-research.md     Market/business research (also published as an Artifact)
   server/                     TypeScript API + WebSocket race relay (SQLite, zero infra)
+                              also serves the web client as static files (same origin)
   ios/
     project.yml               XcodeGen definition → GhostRace.xcodeproj
     GhostRaceKit/              SwiftPM package: ALL race math, pure Foundation, fully unit-tested
     GhostRace/                 SwiftUI app: GPS, audio/haptics, screens, networking
     Fixtures/                 GPX files for Xcode simulator location playback
+  web/                        Browser client: same design, same server, no build step
+    js/                       ES modules — geo + engine (JS twin), api, live WS, audio, gpx
+    test/                     Node tests pinning the web math + racing pipeline
+    fixtures/                 GPX files for in-browser playback / demo
   tools/                      Fixture generator + JS twin of the geo math (see below)
 ```
 
@@ -45,6 +50,46 @@ cd server
 npm install
 npm test        # 17 tests: data layer, REST, race rooms, scripted 2-client live race
 npm run dev     # http://localhost:8787, SQLite file ghostrace.sqlite
+```
+
+## Web — the browser version (no build step, no Mac)
+
+The web client is plain ES modules served by the same Node server, so there's
+no bundler and no CORS. It reuses the exact race engine (a JS twin of
+GhostRaceKit, pinned to the same `crosscheck.json` fixture) and speaks the same
+REST + WebSocket protocol as the iOS app.
+
+```bash
+cd server
+npm run dev            # serves the app + API on http://localhost:8787
+# then open http://localhost:8787 in a browser
+```
+
+Ghost racing works entirely on a laptop — no GPS required:
+
+1. Open the app, enter a name.
+2. **Record → source "Demo fixture — ghost-run.gpx"** at 20× speed → Start →
+   Finish → name the segment. (You've just recorded the ghost's effort.)
+3. Open that segment → **Race your ghost** → when prompted, choose *Cancel* to
+   play back `live-run.gpx` at 20×. Watch the HUD: the delta flips green/red, the
+   TrackBar dots move, the overtake fires in the final stretch with a jingle, and
+   you finish with the victory fanfare — the same scripted race as the iOS
+   simulator test, in the browser.
+4. **Challenge a friend** copies a `…/?challenge=<token>` link; open it in another
+   browser/profile to run the full viral loop (accept → race the ghost → the
+   rivalry record updates on both sides).
+5. **Start a live duel** opens a room with a `…/?race=<id>` link; open it in a
+   second window, pick a segment, and both race in real time against the server's
+   synchronized countdown.
+
+Live GPS (the "Live GPS" source) works on a phone browser over HTTPS or on
+`localhost`. Tones use WebAudio and announcements use the Web Speech API, so keep
+the tab's sound on.
+
+Verify the web race math and pipeline headlessly (any Node 22):
+
+```bash
+node --test web/test/*.test.mjs   # geo cross-check, engine outcome, full ghost-race pipeline
 ```
 
 ## iOS — first build on your Mac
